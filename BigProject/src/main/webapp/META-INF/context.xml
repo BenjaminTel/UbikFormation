@@ -10,5 +10,6 @@
       	password="ubik" 
       	maxTotal="20" 
       	maxIdle="10"
-      	maxWaitMillis="5"/>
+      	maxWaitMillis="5"
+      	defaultAutoCommit="false"/>
 </Context>

@@ -3,7 +3,6 @@ package com.ubik.formation.controller;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,7 +25,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @WebServlet("/LivreController")
 public class LivreController extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	private static final int LIVRE_PAR_PAGE = 5;
+	private static final int LIVRE_PAR_PAGE = 1;
 
 	protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String action = request.getParameter("action");
@@ -145,27 +144,11 @@ public class LivreController extends HttpServlet {
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("page", page);
         
-        String sortBy = request.getParameter("sortBy");
-                
-        Comparator<Livre> comparator = null;
-
-        if (sortBy != null) {
-        	switch (sortBy) {
-	        	case "date":
-	        		comparator = Comparator.comparing(Livre::getDateDeParution);
-	        		if (request.getParameter("order") != null && request.getParameter("order").equals("desc")) {
-	        			comparator = comparator.reversed();
-	        		}
-	        		break;
-	        	default:
-	        		break;
-        	}
-        }
+        String orderBy = request.getParameter("orderBy");
+        String sortOrder = request.getParameter("sortOrder");
         
-        List<Livre> livres =  LivreDAO.getAll(start, LIVRE_PAR_PAGE);
-        if (comparator != null) {
-        	livres.sort(comparator);
-        }
+        List<Livre> livres =  LivreDAO.getAll(start, LIVRE_PAR_PAGE, orderBy, sortOrder);
+
 		request.setAttribute("livres", livres);
 		request.getRequestDispatcher("/WEB-INF/views/ListLivre.jsp").forward(request, response);
 	}

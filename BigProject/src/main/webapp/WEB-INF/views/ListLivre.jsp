@@ -10,6 +10,8 @@
 	int current_page = (int)request.getAttribute("page");
 	int totalPages = (int)request.getAttribute("totalPages");
 	String status = (String)request.getAttribute("status"); 
+	
+	String livreControllerUrl = request.getContextPath() + "/LivreController";
 
 %>
 <!DOCTYPE html>
@@ -34,24 +36,24 @@
 		<table class="table table-striped">
 			<thead>
 				<tr>
-					<th><a href="<%= request.getContextPath() %>/LivreController?action=form"> + Add new book</a></th>			
+					<th><a href="<%= livreControllerUrl %>?action=form"> + Add new book</a></th>			
 					<th scope="col">ID</th>
 					<th scope="col">Author</th>
 					<th scope="col">Title</th>
 					<th scope="col">Publication date 
-						<a href="<%= request.getContextPath() %>/LivreController?action=list&page=<%=current_page %>&sortBy=date&order=asc"> ↑ </a>
-						<a href="<%= request.getContextPath() %>/LivreController?action=list&page=<%=current_page %>&sortBy=date&order=desc"> ↓ </a>
+						<a href="<%= livreControllerUrl %>?action=list&page=<%=current_page %>&orderBy=dateDeParution&sortOrder=ASC"> ↑ </a>
+						<a href="<%= livreControllerUrl %>?action=list&page=<%=current_page %>&orderBy=dateDeParution&sortOrder=DESC"> ↓ </a>
 					</th>	
 				</tr>
 			</thead>
 			<tbody>
 			<% for (Livre livre: livres) { %>
 				<tr>
-					<td><a href ="<%= request.getContextPath() %>/LivreController?action=delete&livreId=<%=livre.getId()%>">Delete</a></td>
-					<td><a href="<%= request.getContextPath() %>/LivreController?action=form&livreId=<%=livre.getId() %>"><%=livre.getId() %></a></td>
-					<td><a href="<%= request.getContextPath() %>/LivreController?action=form&livreId=<%=livre.getId() %>"><%=livre.getAuteur().getPrenom() %> <%=livre.getAuteur().getNom() %></a></td>
-					<td><a href="<%= request.getContextPath() %>/LivreController?action=form&livreId=<%=livre.getId() %>"><%=livre.getTitre() %></a></td>
-					<td><a href="<%= request.getContextPath() %>/LivreController?action=form&livreId=<%=livre.getId() %>"><%=livre.getDateDeParution() %></a></td>
+					<td><a href ="<%= livreControllerUrl %>?action=delete&livreId=<%=livre.getId()%>">Delete</a></td>
+					<td><a href="<%= livreControllerUrl %>?action=form&livreId=<%=livre.getId() %>"><%=livre.getId() %></a></td>
+					<td><a href="<%= livreControllerUrl %>?action=form&livreId=<%=livre.getId() %>"><%=livre.getAuteur().getPrenom() %> <%=livre.getAuteur().getNom() %></a></td>
+					<td><a href="<%= livreControllerUrl %>?action=form&livreId=<%=livre.getId() %>"><%=livre.getTitre() %></a></td>
+					<td><a href="<%= livreControllerUrl %>?action=form&livreId=<%=livre.getId() %>"><%=livre.getDateDeParution() %></a></td>
 				</tr>
 			<% } %>
 			</tbody>
@@ -60,16 +62,16 @@
 		<div>
 		    <!-- Pagination -->
 		    <% if (Integer.valueOf(current_page) > 1) { %>
-		        <a href="<%= request.getContextPath() %>/LivreController?action=list&page=<%= current_page - 1 %>">Previous</a>
+		        <a href="<%= livreControllerUrl %>?action=list&page=<%= current_page - 1 %>">Previous</a>
 		    <% } %>
 		    
 		    <% for (int i = 1; i <= totalPages; i++) { %>
 		        <% if (current_page != i) { %>
-		        	<a href="<%= request.getContextPath() %>/LivreController?action=list&page=<%= i %>"><%= i %></a>
+		        	<a href="<%= livreControllerUrl %>?action=list&page=<%= i %>"><%= i %></a>
 		    	<% } %>
 		    <% } %>
 		    <% if (current_page < totalPages) { %>
-		        <a href="<%= request.getContextPath() %>/LivreController?action=list&page=<%= current_page +1 %>">Next</a>
+		        <a href="<%= livreControllerUrl %>?action=list&page=<%= current_page +1 %>">Next</a>
 		    <% } %>
 		</div>
 		<% } %>

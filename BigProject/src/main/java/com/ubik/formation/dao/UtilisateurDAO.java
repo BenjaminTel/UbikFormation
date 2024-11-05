@@ -7,33 +7,11 @@ import java.sql.SQLException;
 
 import com.ubik.formation.entities.Utilisateur;
 import com.ubik.formation.util.DatabaseConnection;
+import com.ubik.formation.util.SQLConnectionCloser;
 
 public class UtilisateurDAO {
 
 	public static final String TABLENAME = "utilisateur";
-	
-	public static Utilisateur get(Long id) {
-		try (
-			Connection connection = DatabaseConnection.getConnection();
-			PreparedStatement statement = connection.prepareStatement("SELECT * FROM "+ TABLENAME + " WHERE id =? ORDER BY id ASC");
-		){
-			statement.setLong(1, id);
-			
-			ResultSet rs = statement.executeQuery();
-			Utilisateur utilisateur = new Utilisateur();
-			while (rs.next()) {
-				utilisateur.setId(rs.getLong("id"));
-				utilisateur.setNom(rs.getString("nom"));
-				utilisateur.setPrenom(rs.getString("prenom"));
-				utilisateur.setLogin(rs.getString("login"));
-				utilisateur.setPassword(rs.getString("password"));
-			}
-			return utilisateur;
-		} catch (SQLException e){
-
-		}
-		return null;
-	}
 	
 	public static Utilisateur get(String login, String hashedPassword) {
 		try (
@@ -56,10 +34,12 @@ public class UtilisateurDAO {
 	}
 	
 	public static void save(Utilisateur utilisateur) {
-		try (
-			Connection connection = DatabaseConnection.getConnection();
-			PreparedStatement statement = connection.prepareStatement("INSERT INTO " + TABLENAME + " (id, nom, prenom, login, pwd) VALUES (nextVal('utilisateur_id'), ?, ?, ?, ?)");
-		){
+		Connection connection = null;
+		PreparedStatement statement = null;
+		try {
+			connection = DatabaseConnection.getConnection();
+			statement = connection.prepareStatement("INSERT INTO " + TABLENAME + " (id, nom, prenom, login, pwd) VALUES (nextVal('utilisateur_id'), ?, ?, ?, ?)");
+
 			statement.setString(1, utilisateur.getNom());
 			statement.setString(2, utilisateur.getPrenom());
 			statement.setString(3, utilisateur.getLogin());
@@ -67,8 +47,17 @@ public class UtilisateurDAO {
 			
 			statement.executeUpdate();
 			
+			connection.commit();
 		} catch (SQLException e){
-			e.printStackTrace();
+			try {			
+				if (connection != null) {
+					connection.rollback();
+				}
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+		} finally {
+			SQLConnectionCloser.closeConnection(new AutoCloseable[] {connection, statement});
 		}
 	}
 	

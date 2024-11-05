@@ -11,6 +11,7 @@ import java.util.Set;
 
 import com.ubik.formation.entities.Tag;
 import com.ubik.formation.util.DatabaseConnection;
+import com.ubik.formation.util.SQLConnectionCloser;
 
 public class TagDAO {
 	public static final String TABLENAME = "tag";
@@ -52,14 +53,17 @@ public class TagDAO {
 	}
 	
 	public static void save(Tag tag) {
-		try (
-			Connection connection = DatabaseConnection.getConnection();
-			PreparedStatement statement = connection.prepareStatement("INSERT INTO "+ TABLENAME + " (id, libelle)  VALUES (nextVal('tag_id'), ?)", Statement.RETURN_GENERATED_KEYS);
-		){
+		Connection connection = null;
+		PreparedStatement statement = null;
+		try {
+			connection = DatabaseConnection.getConnection();
+			statement = connection.prepareStatement("INSERT INTO "+ TABLENAME + " (id, libelle)  VALUES (nextVal('tag_id'), ?)", Statement.RETURN_GENERATED_KEYS);
+
 			statement.setString(1, tag.getLibelle());
 			
 			int affectedRows = statement.executeUpdate();
 
+			connection.commit();
 	        if (affectedRows > 0) {
 	            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
 	                if (generatedKeys.next()) {
@@ -71,7 +75,15 @@ public class TagDAO {
 	            }
 	        }
 		} catch (SQLException e){
-			e.printStackTrace();
+			try {			
+				if (connection != null) {
+					connection.rollback();
+				}
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+		} finally {
+			SQLConnectionCloser.closeConnection(new AutoCloseable[] {connection, statement});
 		}
 	}
 	
@@ -100,16 +112,28 @@ public class TagDAO {
 	}
 	
 	private static void linkToLivre(Tag tag, Long id_livre) {
-		try (
-			Connection connection = DatabaseConnection.getConnection();
-			PreparedStatement statement = connection.prepareStatement("INSERT INTO tag_livre (id_livre, id_tag)  VALUES (?, ?)");
-		){
+		Connection connection = null;
+		PreparedStatement statement = null;
+		try {
+			connection = DatabaseConnection.getConnection();
+			statement = connection.prepareStatement("INSERT INTO tag_livre (id_livre, id_tag)  VALUES (?, ?)");
+
 			statement.setLong(1, id_livre);
 			statement.setLong(2, tag.getId());
 			
 			statement.executeUpdate();
+			
+			connection.commit();
 		} catch (SQLException e){
-			e.printStackTrace();
+			try {			
+				if (connection != null) {
+					connection.rollback();
+				}
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+		} finally {
+			SQLConnectionCloser.closeConnection(new AutoCloseable[] {connection, statement});
 		}
 	}
 	
@@ -130,21 +154,33 @@ public class TagDAO {
 	}
 	
 	public static void deleteLinkToLivre(String libelle, Long id_livre) {
-		try (
-			Connection connection = DatabaseConnection.getConnection();
-			PreparedStatement statement = connection.prepareStatement(
+		Connection connection = null;
+		PreparedStatement statement = null;
+		try {
+			connection = DatabaseConnection.getConnection();
+			statement = connection.prepareStatement(
 					"DELETE tl "
 					+ "FROM tag_livre tl "
 					+ "JOIN tag t ON t.id = tl.id_tag "
 					+ "WHERE tl.id_livre= ? AND t.libelle= ?"
 			);
-		){
+		
 			statement.setLong(1, id_livre);
 			statement.setString(2, libelle);
 			
 			statement.executeUpdate();
+			
+			connection.commit();
 		} catch (SQLException e){
-			e.printStackTrace();
+			try {			
+				if (connection != null) {
+					connection.rollback();
+				}
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+		} finally {
+			SQLConnectionCloser.closeConnection(new AutoCloseable[] {connection, statement});
 		}
 	}
 }

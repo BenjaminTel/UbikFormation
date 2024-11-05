@@ -1,10 +1,13 @@
 package com.ubik.formation.controller;
 
 import java.io.IOException;
-
+import java.sql.Connection;
+import java.sql.SQLException;
 
 import com.ubik.formation.dao.AuteurDAO;
 import com.ubik.formation.entities.Auteur;
+import com.ubik.formation.util.DatabaseConnection;
+import com.ubik.formation.util.SQLConnectionCloser;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -59,9 +62,41 @@ public class AuteurController extends HttpServlet {
 
 	}
 
-	private void deleteAuteur(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		AuteurDAO.delete(Long.parseLong(request.getParameter("auteurId")));
-		listAuteur(request, response);
+	private void deleteAuteur(HttpServletRequest request, HttpServletResponse response) {
+		Connection connection = null;
+		String[] auteurIds = request.getParameterValues("auteurIds");
+
+		
+        try {
+            connection = DatabaseConnection.getConnection();
+
+            for (String id : auteurIds) {
+            	AuteurDAO.delete(Long.parseLong(id), connection);
+            }
+
+            connection.commit();
+            
+    		request.setAttribute("status", "deleted");
+    		listAuteur(request, response);
+
+        } catch (Exception e) {
+            try {
+            	if (connection != null) {
+            		connection.rollback();
+            	}
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            request.setAttribute("errorMessage", e.getMessage());
+            try {
+                request.getRequestDispatcher("/WEB-INF/views/ErrorHandler.jsp").forward(request, response);
+            } catch (ServletException | IOException ex) {
+                ex.printStackTrace();
+            }
+        } finally {
+            SQLConnectionCloser.closeConnection(connection);
+        }
+        
 	}
 
 	private void updateAuteur(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

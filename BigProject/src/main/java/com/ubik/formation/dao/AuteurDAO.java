@@ -9,17 +9,19 @@ import java.util.List;
 
 import com.ubik.formation.entities.Auteur;
 import com.ubik.formation.util.DatabaseConnection;
+import com.ubik.formation.util.SQLConnectionCloser;
 
 public class AuteurDAO{
 
 	public static final String TABLENAME = "auteur";
 	
 	public static Auteur get(Long id) {
+		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet rs = null;
-		try (
-			Connection connection = DatabaseConnection.getConnection();
-		){
+		
+		try {
+			connection = DatabaseConnection.getConnection();
 			statement = connection.prepareStatement("SELECT * FROM "+ TABLENAME + " WHERE id =? ORDER BY id ASC");
 			statement.setLong(1, id);
 			
@@ -34,22 +36,20 @@ public class AuteurDAO{
 		} catch (SQLException e){
 
 		} finally {
-			try {
-				statement.close();
-				rs.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+			SQLConnectionCloser.closeConnection(new AutoCloseable[] {connection, statement, rs});
 		}
+		
 		return null;
 	}
 
 	public static List<Auteur> getAll() {
+		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet rs = null;
-		try (
-			Connection connection = DatabaseConnection.getConnection();
-		){
+		
+		try {
+			connection = DatabaseConnection.getConnection();
+
 			statement = connection.prepareStatement("SELECT id, nom, prenom FROM "+ TABLENAME);
 			
 			rs = statement.executeQuery();
@@ -62,22 +62,19 @@ public class AuteurDAO{
 		} catch (SQLException e){
 			
 		} finally {
-			try {
-				statement.close();
-				rs.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+			SQLConnectionCloser.closeConnection(new AutoCloseable[] {connection, statement, rs});
 		}
+		
 		return null;
 	}
 	
 	public static List<Auteur> getAll(int start, int total) {
 		PreparedStatement statement = null;
 		ResultSet rs = null;
-		try (
-			Connection connection = DatabaseConnection.getConnection();
-		){
+		Connection connection = null;
+		try {
+			connection = DatabaseConnection.getConnection();
+		
 			statement = connection.prepareStatement(
 					"SELECT id, nom, prenom "
 							+ "FROM "+ TABLENAME +" "
@@ -94,12 +91,7 @@ public class AuteurDAO{
 		} catch (SQLException e){
 			
 		} finally {
-			try {
-				statement.close();
-				rs.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+			SQLConnectionCloser.closeConnection(new AutoCloseable[]{connection ,rs, statement});
 		}
 		return null;
 	}
@@ -108,9 +100,10 @@ public class AuteurDAO{
 		int total = 0;
 		PreparedStatement statement = null;
 		ResultSet rs = null;
-		try (
-			Connection connection = DatabaseConnection.getConnection();
-		){
+		Connection connection = null;
+		try {
+			connection = DatabaseConnection.getConnection();
+
 			statement = connection.prepareStatement("SELECT count(*) from " + TABLENAME);
 			rs = statement.executeQuery();
 			while (rs.next()) {
@@ -120,68 +113,26 @@ public class AuteurDAO{
 		} catch (SQLException e) {
 			
 		} finally {
-			try {
-				statement.close();
-				rs.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+			SQLConnectionCloser.closeConnection(new AutoCloseable[]{connection ,rs, statement});
 		}
 		return total;
 	}
 
 	public static void save(Auteur auteur) {
-		try (
-			Connection connection = DatabaseConnection.getConnection();
-			PreparedStatement statement = connection.prepareStatement("INSERT INTO " + TABLENAME + " (id, nom, prenom) VALUES (nextVal('auteur_id'), ?, ?)");
-		){
-			statement.setString(1, auteur.getNom());
-			statement.setString(2, auteur.getPrenom());
-			
-			statement.executeUpdate();
-
-		} catch (SQLException e){
-			e.printStackTrace();
-		}
-	}
-
-	public static void update(Auteur auteur) {
-		try (
-			Connection connection = DatabaseConnection.getConnection();
-			PreparedStatement statement = connection.prepareStatement("UPDATE " + TABLENAME + " SET nom = ?, prenom = ? WHERE id = ?");
-		){
-			statement.setString(1, auteur.getNom());
-			statement.setString(2, auteur.getPrenom());
-			statement.setLong(3, auteur.getId());
-			
-			statement.executeUpdate();
-		} catch (SQLException e){
-			
-		}
-	}
-
-
-	public static void delete(Long id) {
-		String livreRequest = "DELETE FROM " + LivreDAO.TABLENAME + " WHERE auteurId = ? ";
-		String auteurRequest = "DELETE FROM " + TABLENAME + " WHERE id= ?";
 		Connection connection = null;
-		PreparedStatement livreStatement = null;
-		PreparedStatement auteurStatement = null;
+		PreparedStatement statement = null;
 		try {
 			connection = DatabaseConnection.getConnection();
-			livreStatement = connection.prepareStatement(livreRequest);
-			auteurStatement = connection.prepareStatement(auteurRequest);				
-			connection.setAutoCommit(false);
+			statement = connection.prepareStatement("INSERT INTO " + TABLENAME + " (id, nom, prenom) VALUES (nextVal('auteur_id'), ?, ?)");
+	
+			statement.setString(1, auteur.getNom());
+			statement.setString(2, auteur.getPrenom());
 			
-			livreStatement.setLong(1, id);
-			livreStatement.executeUpdate();
-			
-			auteurStatement.setLong(1, id);
-			auteurStatement.executeUpdate();
-			
+			statement.executeUpdate();
+
 			connection.commit();
-			
-		} catch (SQLException e) {
+
+		} catch (SQLException e){
 			try {
 				if (connection != null) {
 					connection.rollback();					
@@ -190,27 +141,56 @@ public class AuteurDAO{
 				e1.printStackTrace();
 			}
 		} finally {
+			SQLConnectionCloser.closeConnection(new AutoCloseable[]{connection, statement});
+		}
+	}
+
+	public static void update(Auteur auteur) {
+		Connection connection = null;
+		PreparedStatement statement = null;
+		try {
+			connection = DatabaseConnection.getConnection();
+			statement = connection.prepareStatement("UPDATE " + TABLENAME + " SET nom = ?, prenom = ? WHERE id = ?");
+			statement.setString(1, auteur.getNom());
+			statement.setString(2, auteur.getPrenom());
+			statement.setLong(3, auteur.getId());
+			
+			statement.executeUpdate();
+			
+			connection.commit();
+
+		} catch (SQLException e){
 			try {
 				if (connection != null) {
-					connection.close();
+					connection.rollback();					
 				}
-			} catch (SQLException e) {
-				e.printStackTrace();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
 			}
-			try {
-				if (livreStatement != null) {
-					livreStatement.close();
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-			try {
-				if (auteurStatement != null) {
-					auteurStatement.close();
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+		} finally {
+			SQLConnectionCloser.closeConnection(new AutoCloseable[]{connection, statement});
+		}
+	}
+
+
+	public static void delete(Long id, Connection connection) throws Exception {
+	    String tagLivreRequest = "DELETE FROM tag_livre WHERE id_livre IN (SELECT id FROM " + LivreDAO.TABLENAME + " WHERE auteurId = ?)";
+		String livreRequest = "DELETE FROM " + LivreDAO.TABLENAME + " WHERE auteurId = ? ";
+		String auteurRequest = "DELETE FROM " + TABLENAME + " WHERE id= ?";
+
+		try (
+			PreparedStatement tagLivreStatement = connection.prepareStatement(tagLivreRequest);
+			PreparedStatement livreStatement = connection.prepareStatement(livreRequest);
+			PreparedStatement auteurStatement = connection.prepareStatement(auteurRequest);		
+		) {
+			tagLivreStatement.setLong(1, id);
+			tagLivreStatement.executeUpdate();
+			
+			livreStatement.setLong(1, id);
+			livreStatement.executeUpdate();
+			
+			auteurStatement.setLong(1, id);
+			auteurStatement.executeUpdate();
 		}
 	}
 

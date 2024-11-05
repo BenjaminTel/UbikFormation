@@ -10,7 +10,10 @@
 <body>
 	<main>
 		<%@ include file="Banner.jsp" %>
-
+		<h1>Une erreur est survenue</h1>
+	    <div class="alert alert-danger" role="alert">
+	    	<p>${errorMessage}</p>
+    	</div>
 	</main>
 </body>
 </html>

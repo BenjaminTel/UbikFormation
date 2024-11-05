@@ -12,7 +12,7 @@
 	int current_page = (int)request.getAttribute("page");
 	int totalPages = (int)request.getAttribute("totalPages");
 	String status = (String)request.getAttribute("status"); 
-
+	String auteurControllerUrl = request.getContextPath() +"/AuteurController";
 %>
 <!DOCTYPE html>
 <html>
@@ -29,47 +29,57 @@
 				<div class="alert alert-success">
 					Author updated with success.
 				</div>
+			<% } else if (status != null && "deleted".equals(status)) { %>
+				<div class="alert alert-success">
+					Author(s) deleted with success.
+				</div>
 			<% } else if (status != null && "created".equals(status)) { %>
 				<div class="alert alert-success">
 					Author created with success.
 				</div>
 			<% } %>
-		<table class="table table-striped">
-			<thead>
-				<tr>
-					<th><a href="<%= request.getContextPath() %>/AuteurController?action=form"> + Add new author </a></th>			
-					<th scope="col">ID</th>
-					<th scope="col">First name</th>
-					<th scope="col">Last name</th>		
-				</tr>
-			</thead>
-			<tbody>
-			<% for (Auteur auteur : auteurs) { %>
-				<tr>
-					<td><a href ="<%= request.getContextPath() %>/AuteurController?action=delete&auteurId=<%=auteur.getId()%>">Delete</a></td>				
-					<td><a href="<%= request.getContextPath() %>/AuteurController?action=form&auteurId=<%=auteur.getId() %>"><%=auteur.getId() %></a></td>
-					<td><a href="<%= request.getContextPath() %>/AuteurController?action=form&auteurId=<%=auteur.getId() %>"><%=auteur.getPrenom() %></a></td>
-					<td><a href="<%= request.getContextPath() %>/AuteurController?action=form&auteurId=<%=auteur.getId() %>"><%=auteur.getNom() %></a></td>
-				</tr>
-			<% } %>
-			</tbody>
-		</table>
-		<div>
-		    <!-- Pagination -->
-		    <% if (Integer.valueOf(current_page) > 1) { %>
-		        <a href="<%= request.getContextPath() %>/AuteurController?action=list&page=<%= current_page - 1 %>">Previous</a>
-		    <% } %>
-		    
-		    <% for (int i = 1; i <= totalPages; i++) { %>
-		    	<% if (current_page != i) { %>
-		        	<a href="<%= request.getContextPath() %>/AuteurController?action=list&page=<%= i %>"><%= i %></a>
-		        <% } %>
-		    <% } %>
-		    
-		    <% if (current_page < totalPages) { %>
-		        <a href="<%= request.getContextPath() %>/AuteurController?action=list&page=<%= current_page +1 %>">Next</a>
-		    <% } %>
-		</div>
+			<form action="<%= request.getContextPath() %>/AuteurController?action=delete" method="post">
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th scope="col">Select</th>			
+							<th scope="col">ID</th>
+							<th scope="col">First name</th>
+							<th scope="col">Last name</th>		
+						</tr>
+					</thead>
+					<tbody>
+					<% for (Auteur auteur : auteurs) { %>
+						<tr>
+							<td><input type="checkbox" name="auteurIds" value="<%=auteur.getId()%>"></td>				
+							<td><a href="<%= auteurControllerUrl %>?action=form&auteurId=<%=auteur.getId() %>"><%=auteur.getId() %></a></td>
+							<td><a href="<%= auteurControllerUrl %>?action=form&auteurId=<%=auteur.getId() %>"><%=auteur.getPrenom() %></a></td>
+							<td><a href="<%= auteurControllerUrl %>?action=form&auteurId=<%=auteur.getId() %>"><%=auteur.getNom() %></a></td>
+						</tr>
+					<% } %>
+						<tr>
+							<td><button type="submit">Delete</button></td>
+							<td colspan="3"><a href="<%= auteurControllerUrl %>?action=form">Add new author</a></td>
+						</tr>
+					</tbody>
+				</table>
+			</form>
+			<div>
+			    <!-- Pagination -->
+			    <% if (Integer.valueOf(current_page) > 1) { %>
+			        <a href="<%= auteurControllerUrl %>?action=list&page=<%= current_page - 1 %>">Previous</a>
+			    <% } %>
+			    
+			    <% for (int i = 1; i <= totalPages; i++) { %>
+			    	<% if (current_page != i) { %>
+			        	<a href="<%= auteurControllerUrl %>?action=list&page=<%= i %>"><%= i %></a>
+			        <% } %>
+			    <% } %>
+			    
+			    <% if (current_page < totalPages) { %>
+			        <a href="<%= auteurControllerUrl %>?action=list&page=<%= current_page +1 %>">Next</a>
+			    <% } %>
+			</div>
 		<% } %>
 	</main>
 </body>
